@@ -1,143 +1,256 @@
+<div align="center">
+
 # AI Support Intelligence
 
-**An end-to-end NLP/ML portfolio project:** classify banking support messages into intent categories with scikit-learn, serve predictions through FastAPI, and optionally record anonymized prediction metadata in PostgreSQL.
+### ML-сервис классификации обращений в банковскую поддержку
 
-[![Python](https://img.shields.io/badge/Python-3.11%2B-blue)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/API-FastAPI-teal)](https://fastapi.tiangolo.com/)
-[![Tests](https://img.shields.io/badge/tests-pytest-informational)](https://pytest.org/)
+**Python · Machine Learning · FastAPI · PostgreSQL · Docker**
 
-## Features
+![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-API-009688?logo=fastapi&logoColor=white)
+![scikit--learn](https://img.shields.io/badge/scikit--learn-ML-F7931E?logo=scikitlearn&logoColor=white)
+![pytest](https://img.shields.io/badge/pytest-tests-0A9EDC?logo=pytest&logoColor=white)
+![License](https://img.shields.io/badge/license-MIT-informational)
 
-- **Real supervised ML**: TF-IDF (uni-/bigrams) + comparison of Multinomial Naive Bayes and Logistic Regression.
-- **Honest evaluation**: select model using a stratified validation set drawn only from the training partition; evaluate the selected retrained model once on the untouched official test set. Report accuracy and macro-F1.
-- **Inference API**: `POST /predict`, `GET /categories`, `GET /health`; built-in Swagger documentation at `/docs`.
-- **Human review flag**: low-confidence requests are flagged for manual review (heuristic threshold; model scores are not calibrated).
-- **Optional PostgreSQL**: saves predicted category, score and timestamp — **not the customer's message text**.
-- **Engineering**: pytest, input validation, graceful missing-model responses, Docker Compose, reproducible dataset download with SHA-256 checks.
+</div>
 
-### Architecture
+## О проекте
+
+**AI Support Intelligence** — учебный end-to-end проект на стыке **машинного обучения и Python Backend**. Сервис принимает текст обращения клиента банка, определяет предполагаемую категорию запроса и возвращает результат через REST API.
+
+Например, обращение «My new bank card has not arrived yet» может быть отнесено к категории `card_arrival` (доставка карты).
+
+Проект показывает полный путь ML-решения: **подготовка данных → обучение и сравнение моделей → оценка качества → сохранение модели → API для предсказаний → тесты и контейнеризация**.
+
+> **Важно:** используемый датасет — **англоязычный**. Это учебный прототип, а не готовая банковская система. В проекте применяется классический ML, а не LLM или RAG.
+
+## Возможности
+
+- **Классификация обращений.** Обработка текста с помощью TF-IDF и модели машинного обучения.
+- **Сравнение алгоритмов.** Обучение `Logistic Regression` и `Multinomial Naive Bayes`, выбор модели по `macro-F1` на валидации.
+- **REST API на FastAPI.** Отправка текста, получение категории, оценок модели и нескольких наиболее вероятных вариантов.
+- **Флаг проверки человеком.** Если оценка наиболее вероятной категории ниже заданного порога, возвращается `review_required: true`.
+- **Опциональный PostgreSQL.** Сохранение категории, оценки модели, флага проверки и времени запроса — **без хранения исходного текста обращения**.
+- **Инженерная часть.** Валидация запросов через Pydantic, тесты pytest, Docker Compose и CI на GitHub Actions.
+
+## Технологии
+
+| Направление | Инструменты |
+|---|---|
+| Язык | Python 3.11+ |
+| Machine Learning | scikit-learn, pandas, TF-IDF, Logistic Regression, Multinomial Naive Bayes |
+| Backend | FastAPI, Pydantic, Uvicorn |
+| База данных | PostgreSQL, SQLAlchemy |
+| Тестирование | pytest, httpx |
+| Инфраструктура | Docker, Docker Compose, GitHub Actions |
+
+## Архитектура
 
 ```mermaid
-flowchart LR
-    A[BANKING77 CSV] --> B[TF-IDF + train/validation]
-    B --> C[Model selection]
-    C --> D[Train final model]
-    D --> E[(Model artifact)]
-    E --> F[FastAPI /predict]
-    G[Client message] --> F
-    F --> H[Category + top predictions]
-    F -. metadata only .-> I[(PostgreSQL)]
+flowchart TD
+    A[Датасет BANKING77] --> B[Подготовка данных и TF-IDF]
+    B --> C[Обучение и сравнение моделей]
+    C --> D[Выбор по macro-F1]
+    D --> E[Сохранённая ML-модель]
+    F[Текст обращения] --> G[FastAPI: POST /predict]
+    E --> G
+    G --> H[Категория и оценки вариантов]
+    G -. Только метаданные .-> I[(PostgreSQL)]
 ```
 
-## Dataset and scope
+### Как обучается модель
 
-The project uses [BANKING77](https://huggingface.co/datasets/PolyAI/banking77), © PolyAI Limited, licensed **CC BY 4.0**. This is an **English-language** dataset with **77** intent labels, **10,003** training messages and **3,080** test messages. This project is not a Russian-language banking assistant and does not handle account operations or make consequential decisions.
+1. Загружаются обучающая и тестовая выборки.
+2. Обучающая выборка делится на части для обучения и валидации с сохранением пропорций классов.
+3. Сравниваются два пайплайна: **TF-IDF + Logistic Regression** и **TF-IDF + Multinomial Naive Bayes**.
+4. По `macro-F1` на валидации выбирается лучшая конфигурация.
+5. Выбранная модель заново обучается на всей обучающей выборке и **один раз** оценивается на отдельной тестовой выборке.
+6. Модель сохраняется в `artifacts/model.joblib`, а метрики — в `artifacts/metrics.json`.
 
-Original files are fetched from a **pinned** PolyAI commit and verified against SHA-256 checksums; datasets are not committed to Git. If using the data, cite Casanueva et al. (2020), *Efficient Intent Detection with Dual Sentence Encoders* ([paper](https://arxiv.org/abs/2003.04807)).
+Показатели качества: **accuracy** и **macro-F1**. Для воспроизводимости используется `random_state=42`.
 
-## Quick start: local Python (Windows PowerShell or macOS/Linux)
+## Данные
 
-Русская инструкция: [README_RU.md](README_RU.md).
+Для основного эксперимента используется [BANKING77](https://huggingface.co/datasets/PolyAI/banking77) — набор англоязычных обращений в банковскую поддержку:
 
-Requirements: Python **3.11+**. Run all commands in the repository root.
+- **77 категорий** обращений;
+- **10 003** записи в обучающей выборке;
+- **3 080** записей в тестовой выборке.
+
+Скрипт скачивает CSV из зафиксированной версии [исходного репозитория PolyAI](https://github.com/PolyAI-LDN/task-specific-datasets) и проверяет **SHA-256** загруженных файлов.
+
+Для быстрой проверки без интернета есть небольшой **синтетический demo-набор на 6 категориях** (`data/demo_train.csv` и `data/demo_test.csv`). Его результаты нельзя интерпретировать как качество модели на BANKING77.
+
+## Быстрый запуск на Windows (PowerShell)
+
+Все команды ниже выполняются **из корня проекта**. Нужен Python **3.11 или новее**.
+
+**1. Создать виртуальное окружение и установить зависимости**
 
 ```powershell
-python -m venv .venv
-# Activate the environment or call its Python executable explicitly:
-# Windows PowerShell: .\.venv\Scripts\python.exe
-# macOS/Linux: .venv/bin/python
-# Commands below assume the venv is activated.
-python -m pip install -r requirements.txt
-python -m ml.train
-python -m uvicorn app.api:app --reload
+py -3 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
-Windows PowerShell: run `.\.venv\Scripts\python.exe -m pip install -r requirements.txt`, then `.\.venv\Scripts\python.exe -m ml.train`, then `.\.venv\Scripts\python.exe -m uvicorn app.api:app --reload` (no activation required). `python -m ml.train` downloads the real BANKING77 dataset (internet required), compares baselines, trains the final model and writes `artifacts/model.joblib` and `artifacts/metrics.json`. These binary artifacts are ignored by Git.
-
-Visit **http://127.0.0.1:8000/docs** or test the API:
+**2. Обучить демонстрационную модель (без интернета)**
 
 ```powershell
-Invoke-RestMethod -Uri http://127.0.0.1:8000/predict -Method Post -ContentType 'application/json' -Body '{"text":"My card has not arrived yet","top_k":3}'
+.\.venv\Scripts\python.exe -m ml.train --demo
 ```
 
-**Example response structure** (values/categories depend on trained model; no metric is preclaimed):
+**3. Запустить API**
+
+```powershell
+.\.venv\Scripts\python.exe -m uvicorn app.api:app --reload
+```
+
+Теперь доступны:
+
+- **Swagger UI:** http://127.0.0.1:8000/docs
+- **Проверка сервиса:** http://127.0.0.1:8000/health
+- **OpenAPI:** http://127.0.0.1:8000/openapi.json
+
+**4. Отправить запрос**
+
+Через Swagger откройте `POST /predict` → **Try it out** и вставьте:
 
 ```json
 {
-  "category": "card_arrival",
-  "score": 0.42,
-  "review_required": false,
-  "candidates": [{"category": "card_arrival", "score": 0.42}],
-  "model_version": "20261026T120000Z"
+  "text": "My card has not arrived yet",
+  "top_k": 3
 }
 ```
 
-> `candidates` returns up to `top_k` items. The example above is schematic, not a recorded inference. Model estimates are uncalibrated. In a real banking workflow, escalate low-confidence or unsupported-language inputs to a human.
+Или выполните в другом окне PowerShell:
 
-### Offline demo (no network required)
-
-```bash
-python -m ml.train --demo
-python -m uvicorn app.api:app --reload
-pytest -q
+```powershell
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/predict" -Method Post -ContentType "application/json" -Body '{"text":"My card has not arrived yet","top_k":3}'
 ```
 
-The small `data/demo_*.csv` files are **illustrative synthetic data with only six categories** intended for checking the pipeline. **Do not report demo metrics as BANKING77 results.** Running the real train command afterward overwrites the demo model.
+API возвращает `category`, `score`, `review_required`, `candidates` и `model_version`. **Оценки и порядок категорий зависят от обученной модели.**
 
-### Docker + PostgreSQL
+## Обучение на полном BANKING77
 
-```bash
-# First build a real model; the training service downloads BANKING77
-# and shares artifacts with the API via the local ./artifacts directory.
-docker compose --profile training run --build --rm train
-docker compose up --build -d api
-# Swagger: http://127.0.0.1:8000/docs
-# Shutdown: docker compose down
+После проверки демоверсии можно обучить модель на настоящем датасете (нужен доступ в интернет):
+
+```powershell
+.\.venv\Scripts\python.exe -m ml.train
 ```
 
-Postgres is not publicly exposed. Credentials in `compose.yaml` are **development-only** — change them before any public deployment. PostgreSQL persistence is optional when running Python locally; leave `DATABASE_URL` unset to disable it. If it is set, prediction metadata are stored in a table named `predictions` (table created on startup). No authentication/rate limiting is implemented; **do not expose this demo API directly to the internet**.
-
-## Endpoints
-
-| Method | Path | Purpose |
-|---|---|---|
-| `GET` | `/health` | Reports whether a model is available |
-| `GET` | `/categories` | Lists supported classes |
-| `POST` | `/predict` | Returns most likely intent and top-k candidates |
-
-**Request:** `{ "text": "I lost my debit card", "top_k": 3 }`. English text, 3–2,000 characters; `top_k` from 1 to 5. If there is no trained model, `/predict` returns HTTP 503.
-
-## Model development
-
-Training: `python -m ml.train` → `ml/data.py` downloads verified CSVs → `ml/train.py` uses 85% of the official training data for fitting candidates and 15% for validation → picks by validation macro-F1 → retrains on the full official training split → evaluates **once** on official test. Metrics are written to `artifacts/metrics.json` (ignored by Git, since results must be reproducibly generated). Set random seed 42. Validation and test are separate to avoid test leakage.
-
-**Limitations:** 77 fine-grained intents are easily confused; class probabilities are not calibrated, a global review threshold is a heuristic, predictions may be unreliable on unseen topics and on non-English inputs. For production: authentication, PII redaction, monitoring, calibration, migrations, and robustness tests are needed.
-
-## Repository structure
+Скрипт скачает данные, проведёт обучение, сравнит модели и сформирует:
 
 ```text
-app/                 # FastAPI, request/response schemas, storage, inference
-ml/                  # Dataset loader, verified download, training and evaluation
-scripts/             # Optional standalone dataset downloader
-specs/               # Reserved for future architecture notes
-data/demo_*.csv      # Illustrative offline sample
-artifacts/           # Generated model and evaluation metrics (gitignored)
-tests/               # API, validation and training tests
-Dockerfile
-compose.yaml
-requirements.txt
+artifacts/
+├── model.joblib     # обученная модель
+└── metrics.json     # метрики и параметры эксперимента
 ```
 
-## Continuous integration
+После этого **перезапустите API**. Артефакты модели и скачанные данные исключены из Git через `.gitignore`.
 
-GitHub Actions runs unit tests and an offline demo-training smoke test on pushes to `main` and pull requests. The CI demo result is **not** a real BANKING77 benchmark.
+> **О результатах:** показатели качества для полного BANKING77 здесь не опубликованы, потому что обучение на нём нужно выполнить отдельно. Результаты демоверсии не являются подтверждением качества на 77 категориях.
 
-## Tests
+## API
 
-```bash
-python -m pytest -q
+| Метод | Эндпоинт | Назначение |
+|---|---|---|
+| `GET` | `/health` | Проверить, загружена ли модель |
+| `GET` | `/categories` | Получить список доступных категорий |
+| `POST` | `/predict` | Классифицировать обращение |
+
+Для `POST /predict`:
+
+| Поле | Тип | Описание |
+|---|---|---|
+| `text` | `string` | Текст обращения (от 3 до 2000 символов) |
+| `top_k` | `integer` | Число возвращаемых вариантов (от 1 до 5, по умолчанию 3) |
+
+Если модель ещё не обучена, `/predict` возвращает HTTP **503**. Некорректные запросы отклоняются с HTTP **422**.
+
+`score` — оценка классификатора, **не откалиброванная вероятность правильного ответа**. Порог `review_required` по умолчанию — `0.40`; это эвристика, а не гарантия безопасности.
+
+## Запуск с Docker и PostgreSQL
+
+Понадобится установленный Docker с поддержкой Compose.
+
+**1. Обучить модель в контейнере:**
+
+```powershell
+docker compose --profile training run --build --rm train
 ```
 
-## License
+**2. Поднять API и базу данных:**
 
-Project source code: [MIT](LICENSE). BANKING77 data is separately licensed CC BY 4.0 by PolyAI Limited, and is downloaded rather than bundled. This repository does not represent a bank or process real customer records.
+```powershell
+docker compose up --build -d api
+```
+
+**3. Открыть документацию API:** http://127.0.0.1:8000/docs
+
+**4. Остановить сервисы:**
+
+```powershell
+docker compose down
+```
+
+PostgreSQL подключается автоматически в режиме Docker Compose. При локальном запуске без `DATABASE_URL` приложение работает **без базы данных**; настройки можно посмотреть в `.env.example`.
+
+> Пароль в `compose.yaml` предназначен только для локальной разработки. Не следует размещать этот API в открытом доступе без авторизации, ограничений запросов и защиты данных.
+
+## Тестирование и CI
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest -q
+```
+
+Тесты проверяют обработку данных, обучение и работу API, включая валидацию и ситуацию с отсутствующей моделью. В `.github/workflows/ci.yml` настроен GitHub Actions: на `push` в `main` и pull request запускаются тесты и пробное обучение на offline demo-данных.
+
+## Структура проекта
+
+```text
+ai-support-intelligence/
+├── app/
+│   ├── api.py              # эндпоинты FastAPI
+│   ├── inference.py        # загрузка модели и предсказания
+│   ├── schemas.py          # Pydantic-схемы
+│   ├── storage.py          # PostgreSQL и сохранение метаданных
+│   └── config.py           # конфигурация
+├── ml/
+│   ├── data.py             # загрузка и проверка данных
+│   └── train.py            # обучение, выбор модели, метрики
+├── data/
+│   ├── demo_train.csv      # синтетические примеры для обучения
+│   └── demo_test.csv       # синтетические примеры для проверки
+├── scripts/
+│   └── download_data.py    # отдельный скрипт загрузки BANKING77
+├── tests/                  # автоматизированные тесты
+├── artifacts/              # сюда сохраняются модель и метрики
+├── .github/workflows/ci.yml
+├── .env.example
+├── Dockerfile
+├── compose.yaml
+├── requirements.txt
+└── README.md
+```
+
+## Ограничения и дальнейшие улучшения
+
+- Обучение выполнено для **английского языка**; для русского нужен подходящий датасет и отдельная оценка качества.
+- Модель может ошибаться на неоднозначных обращениях и новых категориях.
+- `review_required` использует простой порог, а не калиброванную вероятность.
+- Для production потребуются аутентификация, защита персональных данных, мониторинг, миграции БД и дополнительные проверки качества.
+
+Возможные следующие шаги: сравнение с эмбеддингами и трансформерами, анализ ошибок по категориям, калибровка оценок модели, развёртывание и мониторинг.
+
+## Автор и лицензия
+
+**GitHub:** [Natalie897](https://github.com/Natalie897)
+
+Исходный код проекта распространяется по лицензии [MIT](LICENSE). Данные BANKING77 принадлежат PolyAI и распространяются отдельно по лицензии **CC BY 4.0**. Сведения о датасете и статье: Casanueva et al. (2020), [*Efficient Intent Detection with Dual Sentence Encoders*](https://arxiv.org/abs/2003.04807).
+
+---
+
+<div align="center">
+
+*Pet-проект для развития навыков ML Engineering и Python Backend Development.*
+
+</div>
