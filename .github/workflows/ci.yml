@@ -1,0 +1,33 @@
+name: Python CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Run tests (offline)
+        run: python -m pytest -q
+      - name: Smoke-train offline demo
+        run: python -m ml.train --demo
+      - name: Validate model artifact
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          meta = json.loads(Path('artifacts/metrics.json').read_text())
+          assert meta['mode'] == 'demo'
+          assert meta['num_classes'] == 6
+          print('Demo model trained:', meta['algorithm'])
+          PY

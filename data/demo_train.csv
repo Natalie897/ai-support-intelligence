@@ -1,0 +1,85 @@
+text,category
+Where is the card I ordered last week?,card_arrival
+My new debit card has not arrived yet,card_arrival
+How can I track my card delivery?,card_arrival
+When will my card be shipped?,card_arrival
+I have been waiting for my card for two weeks,card_arrival
+Tell me the expected delivery date for my new card,card_arrival
+Is my replacement card still on the way?,card_arrival
+Please give me a tracking number for card delivery,card_arrival
+I ordered a new card but it is not here,card_arrival
+What is the shipping status of my card?,card_arrival
+Could you check if my bank card was dispatched?,card_arrival
+My card has been delayed in the mail,card_arrival
+I haven't received the new payment card,card_arrival
+How long does delivering a card take?,card_arrival
+I lost my bank card yesterday,lost_or_stolen_card
+Someone stole my debit card,lost_or_stolen_card
+My card was stolen from my wallet,lost_or_stolen_card
+Please freeze a missing card,lost_or_stolen_card
+I can't find my physical credit card,lost_or_stolen_card
+I need to report a stolen card,lost_or_stolen_card
+What do I do when my card is lost?,lost_or_stolen_card
+I misplaced my card in the train,lost_or_stolen_card
+Block the card that was stolen,lost_or_stolen_card
+I have lost access to my card after theft,lost_or_stolen_card
+My wallet was robbed and the card is missing,lost_or_stolen_card
+Cancel my card because it was stolen,lost_or_stolen_card
+I can't locate my bank card anymore,lost_or_stolen_card
+A thief took my debit card,lost_or_stolen_card
+I forgot the passcode to my app,passcode_forgotten
+How do I reset my forgotten password?,passcode_forgotten
+I cannot remember my account passcode,passcode_forgotten
+Need to change a passcode I forgot,passcode_forgotten
+Help me recover my app PIN,passcode_forgotten
+I forgot my login code,passcode_forgotten
+What is the process for resetting a forgotten passcode?,passcode_forgotten
+I lost the code used to sign in,passcode_forgotten
+Can't recall my banking app password,passcode_forgotten
+Please help with passcode recovery,passcode_forgotten
+I forgot the security code for login,passcode_forgotten
+Reset my forgotten login password,passcode_forgotten
+I need help remembering my passcode,passcode_forgotten
+I forgot the code for my account,passcode_forgotten
+What is the exchange rate for euros today?,exchange_rate
+How are currency exchange rates calculated?,exchange_rate
+Tell me the current dollar exchange rate,exchange_rate
+Where can I see foreign exchange rates?,exchange_rate
+How often do currency conversion rates update?,exchange_rate
+Which exchange rate applies to my payment?,exchange_rate
+Show me your euro to dollar conversion rate,exchange_rate
+I want to know today's currency rate,exchange_rate
+Do you have a list of exchange rates?,exchange_rate
+How do you calculate the rate when converting money?,exchange_rate
+Is the exchange rate updated every hour?,exchange_rate
+What conversion rate does the app use?,exchange_rate
+I need information about currency exchange fees and rates,exchange_rate
+Where is the current FX rate published?,exchange_rate
+Why was I charged a fee for paying with my card?,card_payment_fee_charged
+A card transaction has an unexpected fee,card_payment_fee_charged
+Please explain a charge for card payment,card_payment_fee_charged
+The store card payment included extra fees,card_payment_fee_charged
+Is there a transaction charge on this card?,card_payment_fee_charged
+I see a fee after buying something with my card,card_payment_fee_charged
+What caused this card payment fee?,card_payment_fee_charged
+My purchase has an additional card charge,card_payment_fee_charged
+I was charged extra for a debit card purchase,card_payment_fee_charged
+Can you refund the card payment fee?,card_payment_fee_charged
+Why is there a card transaction service fee?,card_payment_fee_charged
+I don't understand the payment processing fee,card_payment_fee_charged
+An extra fee appeared on my card purchase,card_payment_fee_charged
+I paid with card and a charge was added,card_payment_fee_charged
+The recipient still has not received my bank transfer,transfer_not_received_by_recipient
+My money transfer did not arrive at the destination,transfer_not_received_by_recipient
+Why has my wire transfer not reached the other person?,transfer_not_received_by_recipient
+I sent a transfer but the recipient got nothing,transfer_not_received_by_recipient
+The beneficiary says the transfer is missing,transfer_not_received_by_recipient
+Please check a bank transfer that hasn't arrived,transfer_not_received_by_recipient
+Funds have left my account but were not received,transfer_not_received_by_recipient
+Recipient has not received the payment I sent,transfer_not_received_by_recipient
+Where did my missing transfer go?,transfer_not_received_by_recipient
+My bank transfer never reached the recipient,transfer_not_received_by_recipient
+Can you track money that I transferred but was not received?,transfer_not_received_by_recipient
+The destination account has not received the funds,transfer_not_received_by_recipient
+I sent money yesterday and recipient didn't get it,transfer_not_received_by_recipient
+Bank transfer not showing up on recipient side,transfer_not_received_by_recipient

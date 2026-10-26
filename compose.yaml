@@ -1,0 +1,40 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: support
+      POSTGRES_PASSWORD: support_local_only
+      POSTGRES_DB: support_ai
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U support -d support_ai"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    # PostgreSQL is available only to other Compose services (not exposed on host).
+
+  api:
+    build: .
+    environment:
+      DATABASE_URL: postgresql+psycopg2://support:support_local_only@db:5432/support_ai
+      MODEL_PATH: /app/artifacts/model.joblib
+      MODEL_METADATA_PATH: /app/artifacts/metrics.json
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./artifacts:/app/artifacts:ro
+
+  train:
+    build: .
+    profiles: ["training"]
+    command: ["python", "-m", "ml.train"]
+    volumes:
+      - ./artifacts:/app/artifacts
+      - ./data/banking77:/app/data/banking77
+
+volumes:
+  pgdata:

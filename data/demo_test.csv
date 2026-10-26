@@ -1,0 +1,25 @@
+text,category
+Help me locate my undelivered card,card_arrival
+Has my card been sent to my house?,card_arrival
+Card order is not delivered yet,card_arrival
+I need an update on new card delivery,card_arrival
+Help me deactivate a lost card,lost_or_stolen_card
+The credit card disappeared from my wallet,lost_or_stolen_card
+I dropped my card and cannot find it,lost_or_stolen_card
+Report my missing or stolen bank card,lost_or_stolen_card
+How can I create a new password after forgetting it?,passcode_forgotten
+I can't sign in because I forgot my passcode,passcode_forgotten
+Forgot password for bank login,passcode_forgotten
+Where do I reset a forgotten sign in code?,passcode_forgotten
+What's the exchange rate for pounds?,exchange_rate
+How do you determine the conversion rate?,exchange_rate
+Can I check the latest foreign currency rate?,exchange_rate
+Please explain your exchange rate policy,exchange_rate
+Can I avoid fees when paying by card?,card_payment_fee_charged
+Was a fee added to my card payment?,card_payment_fee_charged
+Card purchase fee seems incorrect,card_payment_fee_charged
+How are bank card purchase fees assessed?,card_payment_fee_charged
+Why is my transfer still missing for the payee?,transfer_not_received_by_recipient
+Payment went out but the beneficiary has no money,transfer_not_received_by_recipient
+When will the recipient receive my bank transfer?,transfer_not_received_by_recipient
+Help with an unreceived wire transfer,transfer_not_received_by_recipient
